@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>単語帳・センテンス帳（配信用）</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#eef1f4;--surface:#fff;--ink:#1d2733;--muted:#5d6b7a;--line:#cfd6de;--accent:#1f5f8b;--accent-ink:#fff;--ok:#1b7f4b;--bad:#c62d2d;--badbg:#fde8e8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141a21;--surface:#1d2530;--ink:#e8edf2;--muted:#9aa8b6;--line:#334150;--accent:#6fb3e0;--accent-ink:#0f1a24;--ok:#59c58b;--bad:#ff7b7b;--badbg:#3a2226}}
+:root[data-theme="dark"]{--bg:#141a21;--surface:#1d2530;--ink:#e8edf2;--muted:#9aa8b6;--line:#334150;--accent:#6fb3e0;--accent-ink:#0f1a24;--ok:#59c58b;--bad:#ff7b7b;--badbg:#3a2226}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",system-ui,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:20px;margin:4px 0 16px}
+h2{font-size:16px;margin:20px 0 0}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.card{border:1px solid var(--accent);border-radius:8px;padding:12px;margin-top:12px}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+label{display:block;font-weight:700;margin:12px 0 6px}
+input[type=text],textarea,select,input[type=file]{width:100%;padding:10px;border:2px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:17px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.btn{padding:10px 16px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.5}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.small{padding:4px 10px;font-weight:400;font-size:14px;border-color:var(--line);color:var(--muted);background:transparent}
+.hint{color:var(--muted);font-size:14px;margin:8px 0 0}
+ul{list-style:none;margin:12px 0 0;padding:0}
+li{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:10px 0;border-top:1px solid var(--line)}
+.en{color:var(--muted);font-size:15px}
+.acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.empty{color:var(--muted)}
+#il li,#stageList li{flex-direction:column;align-items:stretch}
+#il select{width:auto;font-size:14px;padding:4px}
+#stageList .src{border-color:var(--accent)}
+.pill{font-size:13px;color:var(--muted);margin-bottom:8px}
+#target{min-height:4em;padding:16px;border:1px solid var(--line);border-radius:10px;font-size:22px;font-weight:700;overflow-wrap:anywhere;margin:12px 0 8px}
+#answer{min-height:1.7em;margin-bottom:10px;color:var(--muted);overflow-wrap:anywhere}
+#typed.bad{border-color:var(--bad);background:var(--badbg)}
+#typed.good{border-color:var(--ok)}
+#msg{min-height:1.7em;margin-top:10px;font-weight:700}
+#msg.bad{color:var(--bad)}#msg.good{color:var(--ok)}
+.shake{animation:shake .25s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media (prefers-reduced-motion:reduce){.shake{animation:none}}
+[hidden]{display:none!important}
+.opt{display:flex;gap:10px;align-items:flex-start;margin:8px 0;padding:12px;border:2px solid var(--line);border-radius:8px;font-weight:400;cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent);background:var(--bg)}
+.opt input{margin-top:6px;width:18px;height:18px;flex:none}
+.opt small{color:var(--muted);font-size:14px}
+fieldset{border:0;padding:0;margin:18px 0 0}
+legend{font-weight:700;padding:0;margin-bottom:2px}
+.big{width:100%;font-size:18px;padding:14px;margin-top:20px}
+.top{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+#typed{font-size:20px;padding:14px}
+#acts .btn,#endrow .btn{flex:1 1 120px;padding:12px}
+.ro .fo{display:none!important}
+body:not(.ro) .ro-only{display:none!important}
+details summary{cursor:pointer}
+#scard{display:block;width:100%;text-align:left;font:inherit;background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:24px 18px;min-height:180px;margin-top:12px;cursor:pointer}
+#sfront,#sback{display:block;overflow-wrap:anywhere}
+#sfront{font-size:24px;font-weight:700}
+#sback{margin-top:16px;padding-top:16px;border-top:1px dashed var(--line);font-size:20px}
+#sback.dim{color:var(--muted);font-size:15px}
+#sacts .btn{flex:1 1 90px;padding:12px}
+</style>
+</head>
+<body>
+<main>
+<h1 id="ttl">単語帳・センテンス帳</h1>
+
+<section id="s-books">
+  <div class="fo">
+    <label for="nb">新しい帳を作る</label>
+    <div class="row" style="margin:0"><input type="text" id="nb" placeholder="帳の名前（例：10月の暗記）" style="flex:1"><button class="btn" id="mk">作る</button></div>
+  </div>
+  <div class="top"><h2 style="margin:0">帳の一覧</h2>
+    <div class="ro-only row" style="margin:0"><span class="hint" id="rs" style="margin:0"></span><button class="btn" id="refresh">更新</button></div></div>
+  <ul id="bl"></ul>
+  <p class="hint" id="pubmsg"></p>
+  <details id="gset" class="fo card"><summary><strong>配信の設定</strong></summary>
+    <label for="ghrepo">配信先（ユーザー名/リポジトリ名）</label><input type="text" id="ghrepo" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="例：taro/tango">
+    <label for="ghtok">アクセストークン</label><input type="password" id="ghtok" autocomplete="off">
+    <div class="row"><button class="btn" id="ghsave">保存</button><button class="btn ghost" id="ghclear">トークンを削除</button><button class="btn ghost" id="ghload">配信状況を読み込む</button></div>
+    <p class="hint" id="ghs"></p>
+    <p class="hint">トークンはこの端末のブラウザにだけ保存されます。このリポジトリの「Contents」の読み書きだけを許可した専用のものを使ってください。</p>
+  </details>
+  <details class="fo card"><summary><strong>コードから帳を追加</strong></summary>
+    <textarea id="code" rows="3" placeholder="配信コードを貼り付け" aria-label="配信コード"></textarea>
+    <div class="row"><button class="btn" id="get">追加する</button><span class="hint" id="gh"></span></div>
+    <div id="offer" class="card" hidden><span id="ot"></span>
+      <div class="row"><button class="btn" id="oy">帳に追加する</button><button class="btn ghost" id="on">しない</button></div></div>
+  </details>
+</section>
+
+<section id="s-book" class="fo" hidden>
+  <button class="btn ghost small" id="bkb">← 帳の一覧</button>
+  <label for="bn">帳の名前</label><input type="text" id="bn">
+  <label for="ja">日本語（単語・文）</label><input type="text" id="ja" autocomplete="off">
+  <label for="en">対応する英語</label><input type="text" id="en" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+  <div class="row"><button class="btn" id="add">追加する</button><span class="hint" id="ah"></span></div>
+  <div id="imp" hidden style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line)">
+    <h2 style="margin:0">画像から読み取って追加</h2>
+    <label for="lang">画像に写っている言語</label>
+    <select id="lang"><option value="ja">日本語</option><option value="en">英語</option></select>
+    <label for="img">画像を選ぶ</label>
+    <input type="file" id="img" accept="image/*" multiple>
+    <div class="row"><button class="btn" id="scan">読み取る</button><button class="btn ghost" id="stop" hidden>中止</button><span class="hint" id="scanHint"></span></div>
+    <div id="stage" hidden>
+      <p class="hint" id="stageHint"></p><ul id="stageList"></ul>
+      <div class="row"><button class="btn" id="stageAdd">この内容で追加する</button><button class="btn ghost" id="stageClear">破棄</button></div>
+    </div>
+  </div>
+  <h2>この帳の中身（直接書き換えられます）</h2>
+  <ul id="il"></ul>
+</section>
+
+<section id="s-setup" hidden>
+  <button class="btn ghost small" id="setb">← 帳の一覧</button>
+  <h2 id="setname" style="margin-top:12px"></h2>
+  <div class="en" id="setcount"></div>
+  <fieldset><legend>判定のタイミング</legend>
+    <label class="opt"><input type="radio" name="md" value="live"><span><strong>間違えた瞬間に判定</strong><br><small>間違った文字を打つとすぐブーと鳴ります。消して打ち直します。</small></span></label>
+    <label class="opt"><input type="radio" name="md" value="submit"><span><strong>打ち終えてから判定</strong><br><small>Enterか「判定する」で判定します。間違えたら、Enterでもう一度打てます（スキップも選べます）。</small></span></label>
+  </fieldset>
+  <fieldset><legend>出題順</legend>
+    <label class="opt"><input type="radio" name="sh" value="0"><span><strong>登録順</strong></span></label>
+    <label class="opt"><input type="radio" name="sh" value="1"><span><strong>ランダム</strong></span></label>
+  </fieldset>
+  <p class="hint">点数：満点は100点です。1問の配点は「100÷問数」で、ミスなしで正解なら配点どおり、ミスがあっても最終的に正解なら半分、スキップは0点です。1問ごとの点数は整数で表示し、合計がちょうど100点になるように四捨五入で調整します。</p>
+  <button class="btn big" id="start">スタート</button>
+  <p class="hint" id="setwarn"></p>
+</section>
+
+<section id="s-study" hidden>
+  <div class="top"><button class="btn ghost small" id="stb">← 帳の一覧</button><span class="pill" id="stp" style="margin:0"></span></div>
+  <div class="row"><select id="sdir" style="width:auto;font-size:14px;padding:4px" aria-label="表示の向き"><option value="ja">日本語 → 英語</option><option value="en">英語 → 日本語</option></select>
+    <label style="display:inline-flex;gap:6px;margin:0;font-weight:400"><input type="checkbox" id="ssh">ランダム順</label></div>
+  <button type="button" id="scard"><span id="sfront"></span><span id="sback" class="dim"></span></button>
+  <div class="row" id="sacts"><button class="btn ghost" id="sprev">← 前へ</button><button class="btn" id="sflip">答えを見る</button><button class="btn ghost" id="snext">次へ →</button></div>
+  <button class="btn big ghost" id="stest">テストに進む</button>
+</section>
+
+<section id="s-prac" hidden>
+  <div class="top"><button class="btn ghost small" id="pb">← やめる</button><span class="pill" id="progress" style="margin:0"></span></div>
+  <div id="target" aria-live="polite"></div>
+  <div id="answer"></div>
+  <input type="text" id="typed" enterkeyhint="go" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="英語を入力">
+  <div id="msg" role="status"></div>
+  <div class="row" id="acts">
+    <button class="btn" id="judge" hidden>判定する</button>
+    <button class="btn" id="retry" hidden>もう一度打つ</button>
+    <button class="btn" id="next" hidden>次に行く</button>
+    <button class="btn ghost" id="skip">スキップ</button>
+  </div>
+  <div class="row" id="endrow" hidden>
+    <button class="btn" id="again">もう一度練習する</button>
+    <button class="btn ghost" id="toSetup">設定にもどる</button>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+var FULL = true;
+var K = FULL ? "sb-admin-v1" : "sb-reader-v1", OLD = "ja-en-typing-items-v2";
+var S = {books:[]}, cur = null, pending = null;
+var $ = function(i){ return document.getElementById(i); };
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function today(){ var d = new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function save(){ try{ localStorage.setItem(K, JSON.stringify(S)); }catch(e){} }
+function load(){
+  try{ var r = localStorage.getItem(K); if(r) S = JSON.parse(r); }catch(e){}
+  if(!S || !Array.isArray(S.books)) S = {books:[]};
+  if(!S.books.length){
+    try{
+      var o = JSON.parse(localStorage.getItem(OLD) || "[]");
+      if(Array.isArray(o) && o.length){
+        S.books.push({id:uid(), name:"これまでの文", items:o.map(function(x){ return {id:x.id||uid(), ja:x.ja, en:x.en, date:x.date||today()}; })});
+        save();
+      }
+    }catch(e){}
+  }
+}
+function bk(id){ id = id || cur; return S.books.filter(function(b){ return b.id === id; })[0]; }
+function mk(tag, cls, txt){ var e = document.createElement(tag); if(cls) e.className = cls; if(txt != null) e.textContent = txt; return e; }
+function btn(t, c, f){ var b = mk("button", "btn " + c, t); b.onclick = f; return b; }
+function norm(s){ return s.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/\s+/g," ").trim(); }
+
+/* ---- sounds ---- */
+var actx = null;
+function tone(type, freqs, dur, vol){
+  try{
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if(actx.state === "suspended") actx.resume();
+    var o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime;
+    o.type = type; freqs.forEach(function(f, i){ o.frequency.setValueAtTime(f, t0 + i*0.12); });
+    g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+    o.connect(g); g.connect(actx.destination); o.start(); o.stop(t0 + dur);
+  }catch(e){}
+}
+function buzz(){ tone("sawtooth", [140], 0.4, 0.25); }
+function chime(){ tone("sine", [660, 880], 0.35, 0.15); }
+
+/* ---- screens ---- */
+function go(n){
+  ["books","book","setup","study","prac"].forEach(function(x){ $("s-"+x).hidden = x !== n; });
+  if(n === "books") renderBooks();
+  if(n === "book") renderBook();
+  if(n === "setup") renderSetup();
+  if(n === "study") startStudy();
+  if(n === "prac") startPractice();
+}
+function renderBooks(){
+  var ul = $("bl"); ul.innerHTML = "";
+  if(!S.books.length){ ul.appendChild(mk("li","empty", FULL ? "まだ帳がありません。上で作ってください。" : "配信されている帳はまだありません。「更新」を押してみてください。")); return; }
+  S.books.forEach(function(b){
+    var li = mk("li"), d = mk("div"), a = mk("div","acts");
+    var tag = (!FULL || !b.pub) ? "" : (b.sig !== sig(b) ? "　配信中（変更あり）" : "　配信中");
+    d.appendChild(mk("strong", null, b.name)); d.appendChild(mk("div","en", b.items.length + "件" + tag));
+    var s1 = btn("学習", "", function(){ cur = b.id; go("study"); }), t1 = btn("テスト", "", function(){ cur = b.id; go("setup"); });
+    if(!b.items.length){ s1.disabled = true; t1.disabled = true; }
+    a.appendChild(s1); a.appendChild(t1);
+    if(FULL){
+      a.appendChild(btn("開く","small",function(){ cur = b.id; go("book"); }));
+      if(!b.pub) a.appendChild(btn("配信","small",function(){ publish(b); }));
+      else {
+        if(b.sig !== sig(b)) a.appendChild(btn("配信を更新","small",function(){ publish(b); }));
+        a.appendChild(btn("取り下げ","small",function(){ unpublish(b); }));
+      }
+      var del = btn("削除","small",function(){
+        if(del.dataset.s){
+          S.books = S.books.filter(function(x){ return x !== b; }); save(); renderBooks();
+          if(b.pub) push("削除: " + b.name).then(function(){ pm("配信からも削除しました。"); }).catch(function(e){ pm("配信の更新に失敗しました。" + (e && e.message ? e.message : "")); });
+        } else { del.dataset.s = 1; del.textContent = b.pub ? "もう一度で削除（配信も取り下げ）" : "もう一度で削除"; }
+      });
+      a.appendChild(del);
+    }
+    li.appendChild(d); li.appendChild(a); ul.appendChild(li);
+  });
+}
+$("mk").onclick = function(){
+  var n = $("nb").value.trim() || "新しい帳", b = {id:uid(), name:n, items:[]};
+  S.books.push(b); save(); $("nb").value = ""; cur = b.id; go("book");
+};
+$("bkb").onclick = $("pb").onclick = function(){ go("books"); };
+
+/* ---- edit a book ---- */
+function ah(t){ $("ah").textContent = t; }
+function renderBook(){
+  var b = bk(); if(!b){ go("books"); return; }
+  $("bn").value = b.name;
+  var ul = $("il"); ul.innerHTML = "";
+  if(!b.items.length) ul.appendChild(mk("li","empty","まだ項目がありません。"));
+  b.items.forEach(function(it){
+    var li = mk("li"), j = mk("input"), e = mk("input"), r = mk("div","acts"), o = mk("select");
+    j.type = e.type = "text"; j.value = it.ja; e.value = it.en; e.autocapitalize = "off"; e.spellcheck = false;
+    j.setAttribute("aria-label","日本語"); e.setAttribute("aria-label","英語");
+    j.onchange = function(){ it.ja = j.value.trim(); save(); };
+    e.onchange = function(){ it.en = e.value.trim(); save(); };
+    o.setAttribute("aria-label","他の帳にコピー"); o.appendChild(new Option("他の帳にコピー…",""));
+    S.books.forEach(function(x){ if(x !== b) o.appendChild(new Option(x.name, x.id)); });
+    o.onchange = function(){
+      var t = bk(o.value);
+      if(t){ t.items.push({id:uid(), ja:it.ja, en:it.en, date:today()}); save(); o.value = ""; ah("「" + t.name + "」にコピーしました。"); }
+    };
+    r.appendChild(o);
+    r.appendChild(btn("削除","small",function(){ b.items = b.items.filter(function(x){ return x !== it; }); save(); renderBook(); }));
+    li.appendChild(j); li.appendChild(e); li.appendChild(r); ul.appendChild(li);
+  });
+}
+$("bn").onchange = function(){ var b = bk(); if(b){ b.name = this.value.trim() || b.name; save(); } };
+function addItem(){
+  var b = bk(), j = $("ja").value.trim(), e = $("en").value.trim();
+  if(!b) return;
+  if(!j || !e){ ah("日本語と英語の両方を入力してください。"); return; }
+  b.items.push({id:uid(), ja:j, en:e, date:today()}); save();
+  $("ja").value = $("en").value = ""; renderBook(); ah("追加しました（" + b.items.length + "件）。"); $("ja").focus();
+}
+$("add").onclick = addItem;
+$("en").addEventListener("keydown", function(e){ if(e.key === "Enter" && !e.isComposing) addItem(); });
+
+/* ---- share / get ---- */
+function b64(u){ var s = ""; for(var k = 0; k < u.length; k++) s += String.fromCharCode(u[k]); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); }
+async function dec(c){
+  if(c.length > 200000) throw 0;
+  var p = c[0], s = c.slice(1).replace(/-/g,"+").replace(/_/g,"/"); while(s.length % 4) s += "=";
+  var bin = atob(s), u = new Uint8Array(bin.length); for(var k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+  if(p === "z") u = new Uint8Array(await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream("deflate-raw"))).arrayBuffer());
+  else if(p !== "r") throw 0;
+  var d = JSON.parse(new TextDecoder().decode(u));
+  if(!d || typeof d.n !== "string" || !Array.isArray(d.i) || d.i.length > 500) throw 0;
+  d.i.forEach(function(q){ if(!Array.isArray(q) || typeof q[0] !== "string" || typeof q[1] !== "string" || q[0].length > 1000 || q[1].length > 1000) throw 0; });
+  d.n = d.n.slice(0, 100); return d;
+}
+async function parse(t){ try{ return await dec(t.trim().split("#").pop()); }catch(e){ return null; } }
+function offerBook(d){ pending = d; $("ot").textContent = "「" + d.n + "」（" + d.i.length + "件）を取得しますか？"; $("offer").hidden = false; }
+$("get").onclick = async function(){
+  var d = await parse($("code").value);
+  if(!d){ $("gh").textContent = "読み取れませんでした。リンクかコードを確認してください。"; return; }
+  $("gh").textContent = ""; offerBook(d);
+};
+$("oy").onclick = function(){
+  if(!pending) return;
+  S.books.push({id:uid(), name:pending.n, items:pending.i.map(function(q){ return {id:uid(), ja:q[0], en:q[1], date:today()}; })});
+  save(); pending = null; $("offer").hidden = true; $("code").value = ""; $("gh").textContent = "取得しました。"; renderBooks();
+};
+$("on").onclick = function(){ pending = null; $("offer").hidden = true; };
+
+/* ---- image import (full version) ---- */
+var sample = null, imgLimits = null, ctl = null, staged = [];
+function sh(t){ $("scanHint").textContent = t; }
+function errCopy(c){
+  if(c === "rate_limited") return "利用回数の上限です。しばらくしてからやり直してください。";
+  if(c === "image_rejected") return "この画像は読み取れませんでした。別の画像を試してください。";
+  if(c === "invalid_json") return "読み取り結果を解釈できませんでした。もう一度試してください。";
+  if(c === "not_granted" || c === "sampling_disabled" || c === "not_declared" || c === "capability_disabled") return "画像の読み取りが許可されていません。";
+  return "読み取りに失敗しました。もう一度試してください。";
+}
+function stageLang(){ var ja = $("lang").value === "ja"; return {s: ja ? "日本語" : "英語", o: ja ? "英語" : "日本語", ja: ja}; }
+function renderStage(){
+  var ul = $("stageList"); ul.innerHTML = ""; $("stage").hidden = !staged.length;
+  if(!staged.length) return;
+  var L = stageLang();
+  $("stageHint").textContent = "読み取った" + L.s + "を確認・修正し、対応する" + L.o + "を入力してください。";
+  staged.forEach(function(row, i){
+    var li = mk("li"), a = mk("input","src"), b = mk("input"), r = btn("この行を削除","small",function(){ staged.splice(i,1); renderStage(); });
+    a.type = b.type = "text"; a.value = row.src; b.value = row.other; b.placeholder = "対応する" + L.o + "を入力";
+    a.setAttribute("aria-label", L.s + "の文"); b.setAttribute("aria-label", L.o + "の文");
+    if(L.ja){ b.autocapitalize = "off"; b.spellcheck = false; }
+    a.oninput = function(){ row.src = a.value; }; b.oninput = function(){ row.other = b.value; };
+    li.appendChild(a); li.appendChild(b); li.appendChild(r); ul.appendChild(li);
+  });
+}
+if(FULL){
+  (async function(){
+    try{
+      if(window.claude && window.claude.use){
+        sample = await window.claude.use("sample");
+        if(sample){
+          var l = await sample.limits(); imgLimits = l.images || null;
+          if(imgLimits){ if(imgLimits.mediaTypes && imgLimits.mediaTypes.length) $("img").accept = imgLimits.mediaTypes.join(","); $("imp").hidden = false; }
+        }
+      }
+    }catch(e){}
+  })();
+}
+$("scan").onclick = async function(){
+  if(!sample) return;
+  var files = Array.prototype.slice.call($("img").files || []), note = "";
+  if(!files.length){ sh("画像を選んでください。"); return; }
+  if(imgLimits && imgLimits.maxCount && files.length > imgLimits.maxCount){ files = files.slice(0, imgLimits.maxCount); note = "先頭の" + imgLimits.maxCount + "枚だけ読み取ります。"; }
+  var L = stageLang();
+  var prompt = "添付した画像に写っている単語や文章のうち、" + L.s + "のものだけをすべて読み取ってください。\n" +
+    "・単語は1語（または1つの見出し語）、文章は1文を1要素にして、画像に書かれている通りに書き出す（誤字の訂正、翻訳、要約、補足はしない）\n" +
+    "・複数行に折り返されている文は1つにつなげる\n" +
+    "・番号、箇条書きの記号、ページ番号、見出し、" + L.o + "など他の言語のものは含めない\n" +
+    "・出力は文字列のJSON配列だけ（前置きやコードフェンスは付けない）。例: [\"文1\",\"文2\"]\n" +
+    "・該当するものがなければ [] を返す";
+  ctl = new AbortController(); $("scan").disabled = true; $("stop").hidden = false; sh("読み取り中…");
+  try{
+    var arr = await sample.json(prompt, {images: files, signal: ctl.signal, cache: false});
+    if(!Array.isArray(arr)) throw {code:"invalid_json"};
+    var found = arr.filter(function(s){ return typeof s === "string" && s.trim(); }).map(function(s){ return {src: s.trim(), other: ""}; });
+    if(!found.length) sh("読み取れませんでした。" + L.s + "が写った画像か確認してください。");
+    else { staged = staged.concat(found); renderStage(); sh(found.length + "件を読み取りました。" + note); }
+  }catch(e){ sh(e && e.code === "cancelled" ? "中止しました。" : errCopy(e && e.code)); }
+  finally{ $("scan").disabled = false; $("stop").hidden = true; ctl = null; }
+};
+$("stop").onclick = function(){ if(ctl) ctl.abort(); };
+$("lang").onchange = function(){ if(staged.length){ staged = []; renderStage(); sh("言語を変えたので、読み取り結果をクリアしました。"); } };
+$("stageClear").onclick = function(){ staged = []; renderStage(); sh(""); };
+$("stageAdd").onclick = function(){
+  var b = bk(), L = stageLang(), t = today(), n = 0, rest = [];
+  if(!b) return;
+  staged.forEach(function(r){
+    var s = r.src.trim(), o = r.other.trim();
+    if(s && o){ b.items.push({id:uid(), ja: L.ja ? s : o, en: L.ja ? o : s, date:t}); n++; } else if(s) rest.push(r);
+  });
+  if(!n){ sh("対応する" + L.o + "を入力してください。"); return; }
+  save(); staged = rest; renderStage(); renderBook();
+  sh(n + "件を追加しました。" + (rest.length ? "未入力の" + rest.length + "件は残してあります。" : ""));
+};
+
+/* ---- practice ---- */
+var pool = [], idx = 0, mistakes = 0, units = 0, cardMiss = 0, tok = 0, stt = "typing", lockVal = "", wasBad = false, composing = false, done = false;
+var cfg = {md:"live", sc:"all", sh:"0"};
+function radio(n){ var r = document.querySelector('input[name="' + n + '"]:checked'); return r ? r.value : null; }
+function setRadio(n, v){ Array.prototype.forEach.call(document.querySelectorAll('input[name="' + n + '"]'), function(r){ r.checked = r.value === v; }); }
+function renderSetup(){
+  var b = bk(); if(!b){ go("books"); return; }
+  var c = S.set || cfg;
+  $("setname").textContent = b.name; $("setcount").textContent = b.items.length + "件"; $("setwarn").textContent = "";
+  setRadio("md", c.md); setRadio("sh", c.sh);
+}
+function buildPool(){
+  var b = bk(), t = today();
+  pool = (b ? b.items : []).filter(function(x){ return x.ja && x.en && (cfg.sc === "all" || x.date === t); });
+  if(cfg.sh === "1") for(var i = pool.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i+1)), k = pool[i]; pool[i] = pool[j]; pool[j] = k; }
+  return pool.length;
+}
+function startPractice(){ buildPool(); idx = 0; mistakes = 0; units = 0; tok++; done = false; renderCard(); }
+$("setb").onclick = function(){ go("books"); };
+$("toSetup").onclick = function(){ go("setup"); };
+$("again").onclick = startPractice;
+$("start").onclick = function(){
+  cfg = {md: radio("md") || "live", sc: "all", sh: radio("sh") || "0"};
+  S.set = cfg; save();
+  if(!buildPool()){ $("setwarn").textContent = "出題できる項目がありません。"; return; }
+  go("prac");
+};
+function setMsg(t, c){ var m = $("msg"); m.textContent = t; m.className = c || ""; }
+function fmt(x){ return String(Math.round(x * 10) / 10); }
+/* 1問の配点は 100÷問数。ミスなし＝2単位、ミスあり正解＝1単位、スキップ＝0。合計は四捨五入。1問ごとの加点は、合計の増え分を整数で表示 */
+function total(){ return pool.length ? Math.min(100, Math.round(100 * units / (2 * pool.length))) : 0; }
+function updateProgress(){ var b = bk(); $("progress").textContent = (b ? b.name + "　" : "") + (idx+1) + " / " + pool.length + "　ミス " + mistakes + "　" + total() + "点"; }
+/* stt: typing = 入力中, wrong = 判定で間違い, wait = 正解後の待ち, skipped = スキップ後, end = 終了 */
+function lock(s2){ stt = s2; lockVal = $("typed").value; }
+function btns(){
+  $("judge").hidden = !(stt === "typing" && cfg.md === "submit");
+  $("retry").hidden = stt !== "wrong";
+  $("next").hidden = stt !== "skipped";
+  $("skip").hidden = stt === "skipped" || stt === "end";
+  $("skip").disabled = stt === "wait";
+  $("acts").hidden = stt === "end";
+  $("endrow").hidden = stt !== "end";
+}
+function renderCard(){
+  var ty = $("typed"); ty.disabled = false; ty.value = ""; ty.className = ""; wasBad = false; cardMiss = 0; stt = "typing"; $("answer").textContent = "";
+  if(!pool.length){ $("progress").textContent = ""; $("target").textContent = "練習する項目がありません。"; ty.disabled = true; stt = "end"; setMsg(""); btns(); return; }
+  if(idx >= pool.length){
+    done = true; stt = "end"; $("progress").textContent = "完了　" + total() + "点";
+    $("target").textContent = pool.length + "問が終わりました。" + total() + " 点（100点満点）、ミス " + mistakes + " 回。";
+    ty.disabled = true; setMsg("おつかれさまでした。", "good"); btns(); return;
+  }
+  ty.placeholder = cfg.md === "submit" ? "打ち終えたらEnterか「判定する」" : "英語を入力";
+  updateProgress(); $("target").textContent = pool[idx].ja; setMsg(""); btns(); ty.focus();
+}
+function win(){
+  var ty = $("typed"), u = cardMiss ? 1 : 2, before = total();
+  units += u; lock("wait"); updateProgress(); btns();
+  ty.className = "good"; chime(); setMsg("正解！ +" + (total() - before) + "点", "good"); $("answer").textContent = pool[idx].en;
+  var t0 = tok; setTimeout(function(){ if(t0 === tok){ idx++; renderCard(); } }, 900);
+}
+function judge(){
+  var ty = $("typed");
+  if(done || !pool.length || stt !== "typing" || !ty.value.trim()) return;
+  if(norm(ty.value) === norm(pool[idx].en)){ win(); return; }
+  cardMiss++; mistakes++; buzz(); updateProgress();
+  ty.className = "bad"; ty.classList.remove("shake"); void ty.offsetWidth; ty.classList.add("shake");
+  lock("wrong"); btns(); setMsg("違います。Enterでもう一度打てます（スキップもできます）。", "bad");
+}
+function retry(){
+  if(stt !== "wrong") return;
+  var ty = $("typed"); ty.value = ""; ty.className = ""; stt = "typing"; setMsg(""); btns(); ty.focus();
+}
+function skip(){
+  if(done || !pool.length || (stt !== "typing" && stt !== "wrong")) return;
+  lock("skipped"); $("answer").textContent = pool[idx].en; $("typed").className = "bad";
+  setMsg("スキップ（0点）。Enterで次に進めます。", "bad"); btns(); $("typed").focus();
+}
+function goNext(){ if(stt !== "skipped") return; idx++; renderCard(); }
+function check(){
+  if(done || !pool.length || composing || stt !== "typing" || cfg.md === "submit") return;
+  var ty = $("typed"), v = norm(ty.value), t = norm(pool[idx].en);
+  if(v === t){ win(); return; }
+  var raw = ty.value.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'"').replace(/^\s+/,"").replace(/\s+/g," ");
+  if(raw.length && !t.startsWith(raw) && !t.startsWith(raw.replace(/ $/,""))){
+    ty.className = "bad";
+    if(!wasBad){ wasBad = true; mistakes++; cardMiss++; buzz(); updateProgress(); ty.classList.remove("shake"); void ty.offsetWidth; ty.classList.add("shake"); }
+    setMsg("違います。消して打ち直してください。", "bad");
+  } else { wasBad = false; ty.className = ""; setMsg(""); }
+}
+/* 入力欄は無効化せず、ロック中は入力を元に戻す（フォーカスを外さないため） */
+$("typed").addEventListener("compositionstart", function(){ composing = true; });
+$("typed").addEventListener("compositionend", function(){ composing = false; if(stt === "typing") check(); else $("typed").value = lockVal; });
+$("typed").addEventListener("input", function(){ if(stt !== "typing"){ $("typed").value = lockVal; return; } check(); });
+$("typed").addEventListener("keydown", function(e){
+  if(e.key !== "Enter" || composing || e.isComposing || !pool[idx] || done) return;
+  e.preventDefault();
+  if(stt === "wrong"){ retry(); return; }
+  if(stt === "skipped"){ goNext(); return; }
+  if(stt !== "typing") return;
+  if(cfg.md === "submit"){ judge(); return; }
+  if(norm($("typed").value) !== norm(pool[idx].en)){ buzz(); setMsg("まだ完成していません。", "bad"); }
+});
+$("judge").onclick = function(){ judge(); $("typed").focus(); };
+$("retry").onclick = retry;
+$("skip").onclick = skip;
+$("next").onclick = goNext;
+Array.prototype.forEach.call(document.querySelectorAll("#acts .btn"), function(b){ b.addEventListener("mousedown", function(e){ e.preventDefault(); }); });
+
+/* ---- study ---- */
+var st = {pool:[], i:0, shown:false};
+function shuf(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i+1)), k = a[i]; a[i] = a[j]; a[j] = k; } return a; }
+function startStudy(){
+  var b = bk(); if(!b){ go("books"); return; }
+  st.pool = b.items.filter(function(x){ return x.ja && x.en; });
+  if($("ssh").checked) shuf(st.pool);
+  st.i = 0; st.shown = false; renderStudy();
+}
+function renderStudy(){
+  var n = st.pool.length, b = bk();
+  $("sprev").disabled = $("snext").disabled = $("sflip").disabled = !n;
+  if(!n){ $("stp").textContent = ""; $("sfront").textContent = "学習する項目がありません。"; $("sback").textContent = ""; return; }
+  var it = st.pool[st.i], ja = $("sdir").value === "ja";
+  $("stp").textContent = (b ? b.name + "　" : "") + (st.i+1) + " / " + n;
+  $("sfront").textContent = ja ? it.ja : it.en;
+  $("sback").textContent = st.shown ? (ja ? it.en : it.ja) : "タップして答えを見る";
+  $("sback").className = st.shown ? "" : "dim";
+  $("sflip").textContent = st.shown ? "答えを隠す" : "答えを見る";
+  $("sprev").disabled = st.i === 0; $("snext").disabled = st.i === n - 1;
+}
+function sflip(){ if(!st.pool.length) return; st.shown = !st.shown; renderStudy(); }
+function sgo(d){ var j = st.i + d; if(j < 0 || j >= st.pool.length) return; st.i = j; st.shown = false; renderStudy(); }
+$("scard").onclick = $("sflip").onclick = sflip;
+$("sprev").onclick = function(){ sgo(-1); };
+$("snext").onclick = function(){ sgo(1); };
+$("sdir").onchange = function(){ st.shown = false; renderStudy(); };
+$("ssh").onchange = startStudy;
+$("stb").onclick = function(){ go("books"); };
+$("stest").onclick = function(){ go("setup"); };
+document.addEventListener("keydown", function(e){
+  if($("s-study").hidden || e.target !== document.body) return;
+  if(e.key === "ArrowRight") sgo(1); else if(e.key === "ArrowLeft") sgo(-1);
+  else if(e.key === " " || e.key === "Enter"){ e.preventDefault(); sflip(); }
+});
+
+/* ---- publish (sender): books.json in the GitHub repository ---- */
+var GH = {repo:"", tok:""};
+function pm(t){ $("pubmsg").textContent = t; }
+function ghs(t){ $("ghs").textContent = t; }
+function sig(b){ return JSON.stringify([b.name, b.items.map(function(x){ return [x.ja, x.en]; })]); }
+function ghInit(){
+  var r = "", t = "";
+  try{ r = localStorage.getItem("gh-repo") || ""; t = localStorage.getItem("gh-tok") || ""; }catch(e){}
+  if(!r){
+    var h = location.hostname, p = location.pathname.split("/")[1] || "";
+    if(/\.github\.io$/.test(h)){ var o = h.split(".")[0]; r = o + "/" + (p && p.indexOf(".") < 0 ? p : o + ".github.io"); }
+  }
+  GH.repo = r; GH.tok = t; $("ghrepo").value = r; $("ghtok").value = t;
+  if(!r || !t) $("gset").open = true;
+}
+$("ghsave").onclick = function(){
+  GH.repo = $("ghrepo").value.trim().replace(/^https?:\/\/github\.com\//, "").replace(/\/+$/, ""); GH.tok = $("ghtok").value.trim();
+  $("ghrepo").value = GH.repo;
+  try{ localStorage.setItem("gh-repo", GH.repo); localStorage.setItem("gh-tok", GH.tok); }catch(e){}
+  ghs("保存しました。");
+};
+$("ghclear").onclick = function(){ GH.tok = ""; $("ghtok").value = ""; try{ localStorage.removeItem("gh-tok"); }catch(e){} ghs("トークンを削除しました。"); };
+function ghHeaders(){ return {"Authorization": "Bearer " + GH.tok, "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"}; }
+function ghUrl(){ return "https://api.github.com/repos/" + GH.repo + "/contents/books.json"; }
+async function ghGet(){
+  if(!GH.repo || !GH.tok) throw new Error("「配信の設定」で、配信先とトークンを保存してください。");
+  var r = await fetch(ghUrl() + "?t=" + Date.now(), {headers: ghHeaders(), cache: "no-store"});
+  if(r.status === 404){
+    var chk = await fetch("https://api.github.com/repos/" + GH.repo, {headers: ghHeaders(), cache: "no-store"});
+    if(!chk.ok) throw new Error("配信先を確認できませんでした（" + chk.status + "）。配信先の名前とトークンを確認してください。");
+    return {sha: null, data: null};
+  }
+  if(!r.ok) throw new Error("配信先を確認できませんでした（" + r.status + "）。配信先の名前とトークンを確認してください。");
+  var j = await r.json(), bin = atob(j.content.replace(/\n/g, ""));
+  var u = new Uint8Array(bin.length); for(var k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
+  return {sha: j.sha, data: JSON.parse(new TextDecoder().decode(u))};
+}
+async function push(msg){
+  var g = await ghGet();
+  var out = {v: 1, updated: new Date().toISOString(), books: S.books.filter(function(b){ return b.pub; }).map(function(b){
+    return {id: b.id, name: b.name, items: b.items.filter(function(x){ return x.ja && x.en; }).map(function(x){ return {ja: x.ja, en: x.en}; })};
+  })};
+  var u = new TextEncoder().encode(JSON.stringify(out)), bin = ""; for(var k = 0; k < u.length; k++) bin += String.fromCharCode(u[k]);
+  var body = {message: msg || "update books", content: btoa(bin)}; if(g.sha) body.sha = g.sha;
+  var r = await fetch(ghUrl(), {method: "PUT", headers: Object.assign({"Content-Type": "application/json"}, ghHeaders()), body: JSON.stringify(body)});
+  if(!r.ok){ var t = ""; try{ t = (await r.json()).message; }catch(e){} throw new Error("配信に失敗しました（" + r.status + (t ? "：" + t : "") + "）"); }
+}
+async function publish(b){
+  pm("配信中…"); var was = b.pub; b.pub = true;
+  try{ await push("配信: " + b.name); b.sig = sig(b); save(); pm("「" + b.name + "」を配信しました。受け取る側に反映されるまで、1〜2分ほどかかります。"); }
+  catch(e){ b.pub = was; pm(e.message || "配信に失敗しました。"); }
+  renderBooks();
+}
+async function unpublish(b){
+  pm("取り下げ中…"); b.pub = false;
+  try{ await push("取り下げ: " + b.name); delete b.sig; save(); pm("「" + b.name + "」の配信を取り下げました。"); }
+  catch(e){ b.pub = true; pm(e.message || "取り下げに失敗しました。"); }
+  renderBooks();
+}
+async function ghLoad(){
+  ghs("読み込み中…");
+  try{
+    var g = await ghGet();
+    if(!g.data || !Array.isArray(g.data.books)){ ghs("まだ何も配信されていません。"); return; }
+    var n = 0;
+    g.data.books.forEach(function(rb){
+      var l = bk(String(rb.id));
+      if(l){ l.pub = true; if(!l.sig) l.sig = sig(l); }
+      else {
+        var nb = {id: String(rb.id), name: String(rb.name).slice(0, 100), pub: true, items: (rb.items || []).map(function(x){ return {id: uid(), ja: String(x.ja), en: String(x.en), date: today()}; })};
+        nb.sig = sig(nb); S.books.push(nb); n++;
+      }
+    });
+    save(); renderBooks(); ghs("読み込みました（新しく追加した帳：" + n + "件）。");
+  }catch(e){ ghs(e.message || "読み込めませんでした。"); }
+}
+$("ghload").onclick = ghLoad;
+
+/* ---- receive (reader): books.json next to this page ---- */
+function hhmm(){ var d = new Date(); return d.getHours() + ":" + String(d.getMinutes()).padStart(2, "0"); }
+async function refresh(){
+  $("rs").textContent = "更新中…"; $("refresh").disabled = true;
+  try{
+    var r = await fetch("books.json?t=" + Date.now(), {cache: "no-store"});
+    if(r.status === 404){ S.books = []; save(); renderBooks(); $("rs").textContent = "まだ何も配信されていません。"; return; }
+    if(!r.ok) throw 0;
+    var d = await r.json();
+    if(!d || !Array.isArray(d.books)) throw 0;
+    S.books = d.books.slice(0, 200).map(function(b){
+      return {id: String(b.id), name: String(b.name).slice(0, 100), items: (b.items || []).slice(0, 1000).map(function(x){ return {id: uid(), ja: String(x.ja), en: String(x.en), date: today()}; })};
+    });
+    save(); renderBooks(); $("rs").textContent = "更新しました（" + hhmm() + "）";
+  }catch(e){ $("rs").textContent = "更新できませんでした。通信を確認してください。前回の内容を表示しています。"; }
+  finally{ $("refresh").disabled = false; }
+}
+$("refresh").onclick = refresh;
+
+/* ---- start ---- */
+load();
+if(!FULL) document.body.classList.add("ro"); else $("ttl").textContent = "単語帳・センテンス帳（配信用）";
+go("books");
+if(FULL) ghInit(); else refresh();
+})();
+</script>
+</body>
+</html>
