@@ -192,14 +192,26 @@ function norm(s){ return s.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D
 var actx = null;
 function tone(type, freqs, dur, vol){
   try{
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    if(actx.state === "suspended") actx.resume();
+    audioCtx();
     var o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime;
     o.type = type; freqs.forEach(function(f, i){ o.frequency.setValueAtTime(f, t0 + i*0.12); });
     g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
     o.connect(g); g.connect(actx.destination); o.start(); o.stop(t0 + dur);
   }catch(e){}
 }
+/* iPhone・iPadのSafariは、タップなどの操作の中で音を有効にしないと鳴らない。消音スイッチ中でも鳴らすための指定も入れる */
+function audioCtx(){
+  try{ if(navigator.audioSession) navigator.audioSession.type = "playback"; }catch(e){}
+  actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+  if(actx.state !== "running") actx.resume();
+  return actx;
+}
+function unlockAudio(){
+  try{ var c = audioCtx(), b = c.createBufferSource(); b.buffer = c.createBuffer(1, 1, 22050); b.connect(c.destination); b.start(0); }catch(e){}
+}
+["pointerdown","touchend","click","keydown"].forEach(function(ev){
+  document.addEventListener(ev, function(){ if(!actx || actx.state !== "running") unlockAudio(); }, {passive: true});
+});
 function buzz(){ tone("sawtooth", [140], 0.4, 0.25); }
 function chime(){ tone("sine", [660, 880], 0.35, 0.15); }
 

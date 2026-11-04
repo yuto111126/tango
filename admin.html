@@ -129,7 +129,6 @@ details summary{cursor:pointer}
     <label class="opt"><input type="radio" name="sh" value="1"><span><strong>ランダム</strong></span></label>
   </fieldset>
   <p class="hint">点数：満点は100点です。1問の配点は「100÷問数」で、ミスなしで正解なら配点どおり、ミスがあっても最終的に正解なら半分、スキップは0点です。1問ごとの点数は整数で表示し、合計がちょうど100点になるように四捨五入で調整します。</p>
-  <button class="btn ghost small" id="snd" style="margin-top:16px">音を確認する（ブー → ピンポン）</button>
   <button class="btn big" id="start">スタート</button>
   <p class="hint" id="setwarn"></p>
 </section>
@@ -215,7 +214,6 @@ function unlockAudio(){
 });
 function buzz(){ tone("sawtooth", [140], 0.4, 0.25); }
 function chime(){ tone("sine", [660, 880], 0.35, 0.15); }
-$("snd").onclick = function(){ unlockAudio(); buzz(); setTimeout(chime, 600); };
 
 /* ---- screens ---- */
 function go(n){
