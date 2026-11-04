@@ -129,6 +129,7 @@ details summary{cursor:pointer}
     <label class="opt"><input type="radio" name="sh" value="1"><span><strong>ランダム</strong></span></label>
   </fieldset>
   <p class="hint">点数：満点は100点です。1問の配点は「100÷問数」で、ミスなしで正解なら配点どおり、ミスがあっても最終的に正解なら半分、スキップは0点です。1問ごとの点数は整数で表示し、合計がちょうど100点になるように四捨五入で調整します。</p>
+  <button class="btn ghost small" id="snd" style="margin-top:16px">音を確認する（ブー → ピンポン）</button>
   <button class="btn big" id="start">スタート</button>
   <p class="hint" id="setwarn"></p>
 </section>
@@ -192,16 +193,29 @@ function norm(s){ return s.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D
 var actx = null;
 function tone(type, freqs, dur, vol){
   try{
-    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
-    if(actx.state === "suspended") actx.resume();
+    audioCtx();
     var o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime;
     o.type = type; freqs.forEach(function(f, i){ o.frequency.setValueAtTime(f, t0 + i*0.12); });
     g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
     o.connect(g); g.connect(actx.destination); o.start(); o.stop(t0 + dur);
   }catch(e){}
 }
+/* iPhone・iPadのSafariは、タップなどの操作の中で音を有効にしないと鳴らない。消音スイッチ中でも鳴らすための指定も入れる */
+function audioCtx(){
+  try{ if(navigator.audioSession) navigator.audioSession.type = "playback"; }catch(e){}
+  actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+  if(actx.state !== "running") actx.resume();
+  return actx;
+}
+function unlockAudio(){
+  try{ var c = audioCtx(), b = c.createBufferSource(); b.buffer = c.createBuffer(1, 1, 22050); b.connect(c.destination); b.start(0); }catch(e){}
+}
+["pointerdown","touchend","click","keydown"].forEach(function(ev){
+  document.addEventListener(ev, function(){ if(!actx || actx.state !== "running") unlockAudio(); }, {passive: true});
+});
 function buzz(){ tone("sawtooth", [140], 0.4, 0.25); }
 function chime(){ tone("sine", [660, 880], 0.35, 0.15); }
+$("snd").onclick = function(){ unlockAudio(); buzz(); setTimeout(chime, 600); };
 
 /* ---- screens ---- */
 function go(n){
