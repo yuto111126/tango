@@ -76,7 +76,8 @@ details summary{cursor:pointer}
     <div class="row" style="margin:0"><input type="text" id="nb" placeholder="帳の名前（例：10月の暗記）" style="flex:1"><button class="btn" id="mk">作る</button></div>
   </div>
   <div class="top"><h2 style="margin:0">帳の一覧</h2>
-    <div class="ro-only row" style="margin:0"><span class="hint" id="rs" style="margin:0"></span><button class="btn" id="refresh">更新</button></div></div>
+    <div class="ro-only row" style="margin:0"><span class="hint" id="rs" style="margin:0"></span><button class="btn" id="refresh">更新</button></div>
+    <div class="fo row" style="margin:0"><span class="hint" id="cs" style="margin:0"></span><button class="btn ghost small" id="cnt">テスト回数を更新</button></div></div>
   <ul id="bl"></ul>
   <p class="hint" id="pubmsg"></p>
   <details id="gset" class="fo card"><summary><strong>配信の設定</strong></summary>
@@ -230,6 +231,7 @@ function renderBooks(){
   S.books.forEach(function(b){
     var li = mk("li"), d = mk("div"), a = mk("div","acts");
     var tag = (!FULL || !b.pub) ? "" : (b.sig !== sig(b) ? "　配信中（変更あり）" : "　配信中");
+    if(FULL && b.pub && COUNTS[b.id]) tag += "　テスト：開始" + COUNTS[b.id].s + "回・完了" + COUNTS[b.id].d + "回";
     d.appendChild(mk("strong", null, b.name)); d.appendChild(mk("div","en", b.items.length + "件" + tag));
     var s1 = btn("学習", "", function(){ cur = b.id; go("study"); }), t1 = btn("テスト", "", function(){ cur = b.id; go("setup"); });
     if(!b.items.length){ s1.disabled = true; t1.disabled = true; }
@@ -244,7 +246,7 @@ function renderBooks(){
       var del = btn("削除","small",function(){
         if(del.dataset.s){
           S.books = S.books.filter(function(x){ return x !== b; }); save(); renderBooks();
-          if(b.pub) push("削除: " + b.name).then(function(){ pm("配信からも削除しました。"); }).catch(function(e){ pm("配信の更新に失敗しました。" + (e && e.message ? e.message : "")); });
+          if(b.pub) push("削除: " + b.name, b.id).then(function(){ pm("配信からも削除しました。"); }).catch(function(e){ pm("配信の更新に失敗しました。" + (e && e.message ? e.message : "")); });
         } else { del.dataset.s = 1; del.textContent = b.pub ? "もう一度で削除（配信も取り下げ）" : "もう一度で削除"; }
       });
       a.appendChild(del);
@@ -412,7 +414,7 @@ function buildPool(){
   if(cfg.sh === "1") for(var i = pool.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i+1)), k = pool[i]; pool[i] = pool[j]; pool[j] = k; }
   return pool.length;
 }
-function startPractice(){ buildPool(); idx = 0; mistakes = 0; units = 0; tok++; done = false; renderCard(); }
+function startPractice(){ buildPool(); idx = 0; mistakes = 0; units = 0; tok++; done = false; renderCard(); if(!FULL && cur && pool.length) hit(cur + "-s"); }
 $("setb").onclick = function(){ go("books"); };
 $("toSetup").onclick = function(){ go("setup"); };
 $("again").onclick = startPractice;
@@ -442,7 +444,7 @@ function renderCard(){
   var ty = $("typed"); ty.disabled = false; ty.value = ""; ty.className = ""; wasBad = false; cardMiss = 0; stt = "typing"; $("answer").textContent = "";
   if(!pool.length){ $("progress").textContent = ""; $("target").textContent = "練習する項目がありません。"; ty.disabled = true; stt = "end"; setMsg(""); btns(); return; }
   if(idx >= pool.length){
-    done = true; stt = "end"; $("progress").textContent = "完了　" + total() + "点";
+    done = true; stt = "end"; if(!FULL && cur) hit(cur + "-d"); $("progress").textContent = "完了　" + total() + "点";
     $("target").textContent = pool.length + "問が終わりました。" + total() + " 点（100点満点）、ミス " + mistakes + " 回。";
     ty.disabled = true; setMsg("おつかれさまでした。", "good"); btns(); return;
   }
@@ -576,11 +578,17 @@ async function ghGet(){
   var u = new Uint8Array(bin.length); for(var k = 0; k < bin.length; k++) u[k] = bin.charCodeAt(k);
   return {sha: j.sha, data: JSON.parse(new TextDecoder().decode(u))};
 }
-async function push(msg){
+async function push(msg, removeId){
   var g = await ghGet();
-  var out = {v: 1, updated: new Date().toISOString(), books: S.books.filter(function(b){ return b.pub; }).map(function(b){
-    return {id: b.id, name: b.name, items: b.items.filter(function(x){ return x.ja && x.en; }).map(function(x){ return {ja: x.ja, en: x.en}; })};
-  })};
+  var mine = {};
+  S.books.forEach(function(b){ if(b.pub) mine[b.id] = {id: b.id, name: b.name, items: b.items.filter(function(x){ return x.ja && x.en; }).map(function(x){ return {ja: x.ja, en: x.en}; })}; });
+  var list = [], seen = {};
+  ((g.data && g.data.books) || []).forEach(function(rb){
+    var id = String(rb.id); if(id === removeId) return;
+    seen[id] = 1; list.push(mine[id] || {id: id, name: rb.name, items: rb.items});
+  });
+  S.books.forEach(function(b){ if(b.pub && !seen[b.id]) list.push(mine[b.id]); });
+  var out = {v: 1, updated: new Date().toISOString(), books: list};
   var u = new TextEncoder().encode(JSON.stringify(out)), bin = ""; for(var k = 0; k < u.length; k++) bin += String.fromCharCode(u[k]);
   var body = {message: msg || "update books", content: btoa(bin)}; if(g.sha) body.sha = g.sha;
   var r = await fetch(ghUrl(), {method: "PUT", headers: Object.assign({"Content-Type": "application/json"}, ghHeaders()), body: JSON.stringify(body)});
@@ -594,7 +602,7 @@ async function publish(b){
 }
 async function unpublish(b){
   pm("取り下げ中…"); b.pub = false;
-  try{ await push("取り下げ: " + b.name); delete b.sig; save(); pm("「" + b.name + "」の配信を取り下げました。"); }
+  try{ await push("取り下げ: " + b.name, b.id); delete b.sig; save(); pm("「" + b.name + "」の配信を取り下げました。"); }
   catch(e){ b.pub = true; pm(e.message || "取り下げに失敗しました。"); }
   renderBooks();
 }
@@ -636,11 +644,38 @@ async function refresh(){
 }
 $("refresh").onclick = refresh;
 
+/* ---- test counts (reader sends, admin reads) ---- */
+var COUNTS = {};
+var ABACUS = "https://abacus.jasoncameron.dev";
+function cns(){
+  var h = location.hostname, p = location.pathname.split("/")[1] || "";
+  if(!/\.github\.io$/.test(h)) return "";
+  return h.split(".")[0] + "-" + (p && p.indexOf(".") < 0 ? p : "site");
+}
+function hit(key){ var n = cns(); if(!n) return; try{ fetch(ABACUS + "/hit/" + n + "/" + key, {keepalive: true}).catch(function(){}); }catch(e){} }
+async function getCount(key){
+  var r = await fetch(ABACUS + "/get/" + cns() + "/" + key, {cache: "no-store"});
+  if(r.status === 404) return 0;
+  if(!r.ok) throw 0;
+  var j = await r.json(); return Number(j.value) || 0;
+}
+async function loadCounts(){
+  if(!cns()){ $("cs").textContent = "GitHub上のページでのみ使えます。"; return; }
+  var pubs = S.books.filter(function(b){ return b.pub; });
+  if(!pubs.length){ $("cs").textContent = "配信中の帳がありません。"; return; }
+  $("cs").textContent = "取得中…";
+  try{
+    await Promise.all(pubs.map(async function(b){ COUNTS[b.id] = {s: await getCount(b.id + "-s"), d: await getCount(b.id + "-d")}; }));
+    renderBooks(); $("cs").textContent = "更新しました（" + hhmm() + "）";
+  }catch(e){ $("cs").textContent = "取得できませんでした。しばらくしてからもう一度お試しください。"; }
+}
+$("cnt").onclick = loadCounts;
+
 /* ---- start ---- */
 load();
 if(!FULL) document.body.classList.add("ro"); else $("ttl").textContent = "単語帳・センテンス帳（配信用）";
 go("books");
-if(FULL) ghInit(); else refresh();
+if(FULL){ ghInit(); loadCounts(); } else refresh();
 })();
 </script>
 </body>
