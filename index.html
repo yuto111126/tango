@@ -55,6 +55,22 @@ legend{font-weight:700;padding:0;margin-bottom:2px}
 .top{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
 #typed{font-size:20px;padding:14px}
 #acts .btn,#endrow .btn{flex:1 1 120px;padding:12px}
+.seg{display:flex;margin-top:12px}
+.seg button{flex:1;padding:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.seg button:first-child{border-radius:8px 0 0 8px}
+.seg button:last-child{border-radius:0 8px 8px 0;border-left-width:0}
+.seg button:disabled{opacity:.5}
+.seg .k0[aria-pressed="true"]{background:var(--muted);border-color:var(--muted);color:var(--accent-ink)}
+.seg .k1[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--accent-ink)}
+.kbtn{padding:6px 12px;border-radius:999px;border:2px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-size:14px;cursor:pointer;white-space:nowrap}
+.kbtn[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:var(--accent-ink);font-weight:700}
+#wl li div{flex:1 1 55%;min-width:0;overflow-wrap:anywhere}
+#rl li > div:first-child{flex:1 1 55%;min-width:0;overflow-wrap:anywhere}
+.mark{text-align:center;min-width:64px}
+.mark .sym{display:block;font-size:26px;font-weight:700;line-height:1.2}
+.mark .cap{display:block;font-size:12px;color:var(--muted)}
+.mark.ok .sym{color:var(--ok)}
+.mark.ng .sym{color:var(--bad)}
 .ro .fo{display:none!important}
 body:not(.ro) .ro-only{display:none!important}
 details summary{cursor:pointer}
@@ -125,6 +141,11 @@ details summary{cursor:pointer}
     <label class="opt"><input type="radio" name="md" value="live"><span><strong>間違えた瞬間に判定</strong><br><small>間違った文字を打つとすぐブーと鳴ります。消して打ち直します。</small></span></label>
     <label class="opt"><input type="radio" name="md" value="submit"><span><strong>打ち終えてから判定</strong><br><small>Enterか「判定する」で判定します。間違えたら、Enterでもう一度打てます（スキップも選べます）。</small></span></label>
   </fieldset>
+  <fieldset><legend>出題する項目</legend>
+    <label class="opt"><input type="radio" name="fl" value="all"><span><strong>全部</strong> <small id="fl-all"></small></span></label>
+    <label class="opt"><input type="radio" name="fl" value="unk"><span><strong>覚えていないものだけ</strong> <small id="fl-unk"></small></span></label>
+    <label class="opt"><input type="radio" name="fl" value="known"><span><strong>覚えたものだけ</strong> <small id="fl-known"></small></span></label>
+  </fieldset>
   <fieldset><legend>出題順</legend>
     <label class="opt"><input type="radio" name="sh" value="0"><span><strong>登録順</strong></span></label>
     <label class="opt"><input type="radio" name="sh" value="1"><span><strong>ランダム</strong></span></label>
@@ -134,12 +155,21 @@ details summary{cursor:pointer}
   <p class="hint" id="setwarn"></p>
 </section>
 
+<section id="s-words" hidden>
+  <div class="top"><button class="btn ghost small" id="wb">← 帳の一覧</button><span class="pill" id="wp" style="margin:0"></span></div>
+  <div class="row"><select id="wflt" style="width:auto;font-size:14px;padding:4px" aria-label="絞り込み"><option value="all">全部</option><option value="unk">覚えていない</option><option value="known">覚えた</option></select></div>
+  <ul id="wl"></ul>
+  <button class="btn big" id="wstart">学習を開始する</button>
+</section>
+
 <section id="s-study" hidden>
-  <div class="top"><button class="btn ghost small" id="stb">← 帳の一覧</button><span class="pill" id="stp" style="margin:0"></span></div>
+  <div class="top"><button class="btn ghost small" id="stb">← 一覧に戻る</button><span class="pill" id="stp" style="margin:0"></span></div>
   <div class="row"><select id="sdir" style="width:auto;font-size:14px;padding:4px" aria-label="表示の向き"><option value="ja">日本語 → 英語</option><option value="en">英語 → 日本語</option></select>
+    <select id="sflt" style="width:auto;font-size:14px;padding:4px" aria-label="絞り込み"><option value="all">全部</option><option value="unk">覚えていない</option><option value="known">覚えた</option></select>
     <label style="display:inline-flex;gap:6px;margin:0;font-weight:400"><input type="checkbox" id="ssh">ランダム順</label></div>
   <button type="button" id="scard"><span id="sfront"></span><span id="sback" class="dim"></span></button>
   <div class="row" id="sacts"><button class="btn ghost" id="sprev">← 前へ</button><button class="btn" id="sflip">答えを見る</button><button class="btn ghost" id="snext">次へ →</button></div>
+  <div class="seg" id="sknow" role="group" aria-label="覚えたかどうか"><button type="button" class="k0" id="sk0">覚えていない</button><button type="button" class="k1" id="sk1">覚えた</button></div>
   <button class="btn big ghost" id="stest">テストに進む</button>
 </section>
 
@@ -155,10 +185,12 @@ details summary{cursor:pointer}
     <button class="btn" id="next" hidden>次に行く</button>
     <button class="btn ghost" id="skip">スキップ</button>
   </div>
+  <div class="seg" id="tknow" role="group" aria-label="覚えたかどうか"><button type="button" class="k0" id="tk0">覚えていない</button><button type="button" class="k1" id="tk1">覚えた</button></div>
   <div class="row" id="endrow" hidden>
     <button class="btn" id="again">もう一度練習する</button>
     <button class="btn ghost" id="toSetup">設定にもどる</button>
   </div>
+  <ul id="rl" hidden></ul>
 </section>
 </main>
 
@@ -218,11 +250,12 @@ function chime(){ tone("sine", [660, 880], 0.35, 0.15); }
 
 /* ---- screens ---- */
 function go(n){
-  ["books","book","setup","study","prac"].forEach(function(x){ $("s-"+x).hidden = x !== n; });
+  ["books","book","setup","study","words","prac"].forEach(function(x){ $("s-"+x).hidden = x !== n; });
   if(n === "books") renderBooks();
   if(n === "book") renderBook();
   if(n === "setup") renderSetup();
   if(n === "study") startStudy();
+  if(n === "words") renderWords();
   if(n === "prac") startPractice();
 }
 function renderBooks(){
@@ -232,8 +265,9 @@ function renderBooks(){
     var li = mk("li"), d = mk("div"), a = mk("div","acts");
     var tag = (!FULL || !b.pub) ? "" : (b.sig !== sig(b) ? "　配信中（変更あり）" : "　配信中");
     if(FULL && b.pub && COUNTS[b.id]) tag += "　テスト：開始" + COUNTS[b.id].s + "回・完了" + COUNTS[b.id].d + "回";
-    d.appendChild(mk("strong", null, b.name)); d.appendChild(mk("div","en", b.items.length + "件" + tag));
-    var s1 = btn("学習", "", function(){ cur = b.id; go("study"); }), t1 = btn("テスト", "", function(){ cur = b.id; go("setup"); });
+    var kn = b.items.filter(function(x){ return isKnown(b.id, x); }).length;
+    d.appendChild(mk("strong", null, b.name)); d.appendChild(mk("div","en", b.items.length + "件　覚えた" + kn + tag));
+    var s1 = btn("学習", "", function(){ cur = b.id; go("words"); }), t1 = btn("テスト", "", function(){ cur = b.id; go("setup"); });
     if(!b.items.length){ s1.disabled = true; t1.disabled = true; }
     a.appendChild(s1); a.appendChild(t1);
     if(FULL){
@@ -398,30 +432,32 @@ $("stageAdd").onclick = function(){
 };
 
 /* ---- practice ---- */
-var pool = [], idx = 0, mistakes = 0, units = 0, cardMiss = 0, tok = 0, stt = "typing", lockVal = "", wasBad = false, composing = false, done = false;
-var cfg = {md:"live", sc:"all", sh:"0"};
+var pool = [], res = [], idx = 0, mistakes = 0, units = 0, cardMiss = 0, tok = 0, stt = "typing", lockVal = "", wasBad = false, composing = false, done = false;
+var cfg = {md:"live", sc:"all", sh:"0", fl:"all"};
 function radio(n){ var r = document.querySelector('input[name="' + n + '"]:checked'); return r ? r.value : null; }
 function setRadio(n, v){ Array.prototype.forEach.call(document.querySelectorAll('input[name="' + n + '"]'), function(r){ r.checked = r.value === v; }); }
 function renderSetup(){
   var b = bk(); if(!b){ go("books"); return; }
   var c = S.set || cfg;
   $("setname").textContent = b.name; $("setcount").textContent = b.items.length + "件"; $("setwarn").textContent = "";
-  setRadio("md", c.md); setRadio("sh", c.sh);
+  setRadio("md", c.md); setRadio("sh", c.sh); setRadio("fl", c.fl || "all");
+  var tot = b.items.filter(function(x){ return x.ja && x.en; }), kn = tot.filter(function(x){ return isKnown(b.id, x); }).length;
+  $("fl-all").textContent = "（" + tot.length + "件）"; $("fl-unk").textContent = "（" + (tot.length - kn) + "件）"; $("fl-known").textContent = "（" + kn + "件）";
 }
 function buildPool(){
   var b = bk(), t = today();
-  pool = (b ? b.items : []).filter(function(x){ return x.ja && x.en && (cfg.sc === "all" || x.date === t); });
+  pool = (b ? b.items : []).filter(function(x){ return x.ja && x.en && (cfg.sc === "all" || x.date === t) && (!cfg.fl || cfg.fl === "all" || (cfg.fl === "known") === isKnown(b.id, x)); });
   if(cfg.sh === "1") for(var i = pool.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i+1)), k = pool[i]; pool[i] = pool[j]; pool[j] = k; }
   return pool.length;
 }
-function startPractice(){ buildPool(); idx = 0; mistakes = 0; units = 0; tok++; done = false; renderCard(); if(!FULL && cur && pool.length) hit(cur + "-s"); }
+function startPractice(){ buildPool(); idx = 0; mistakes = 0; units = 0; res = []; tok++; done = false; renderCard(); if(!FULL && cur && pool.length) hit(cur + "-s"); }
 $("setb").onclick = function(){ go("books"); };
 $("toSetup").onclick = function(){ go("setup"); };
 $("again").onclick = startPractice;
 $("start").onclick = function(){
-  cfg = {md: radio("md") || "live", sc: "all", sh: radio("sh") || "0"};
+  cfg = {md: radio("md") || "live", sc: "all", sh: radio("sh") || "0", fl: radio("fl") || "all"};
   S.set = cfg; save();
-  if(!buildPool()){ $("setwarn").textContent = "出題できる項目がありません。"; return; }
+  if(!buildPool()){ $("setwarn").textContent = cfg.fl === "unk" ? "覚えていない項目がありません。" : cfg.fl === "known" ? "覚えた項目がありません。" : "出題できる項目がありません。"; return; }
   go("prac");
 };
 function setMsg(t, c){ var m = $("msg"); m.textContent = t; m.className = c || ""; }
@@ -429,22 +465,24 @@ function fmt(x){ return String(Math.round(x * 10) / 10); }
 /* 1問の配点は 100÷問数。ミスなし＝2単位、ミスあり正解＝1単位、スキップ＝0。合計は四捨五入。1問ごとの加点は、合計の増え分を整数で表示 */
 function total(){ return pool.length ? Math.min(100, Math.round(100 * units / (2 * pool.length))) : 0; }
 function updateProgress(){ var b = bk(); $("progress").textContent = (b ? b.name + "　" : "") + (idx+1) + " / " + pool.length + "　ミス " + mistakes + "　" + total() + "点"; }
-/* stt: typing = 入力中, wrong = 判定で間違い, wait = 正解後の待ち, skipped = スキップ後, end = 終了 */
+/* stt: typing = 入力中, wrong = 判定で間違い, correct = 正解後, skipped = スキップ後, end = 終了 */
 function lock(s2){ stt = s2; lockVal = $("typed").value; }
 function btns(){
   $("judge").hidden = !(stt === "typing" && cfg.md === "submit");
   $("retry").hidden = stt !== "wrong";
-  $("next").hidden = stt !== "skipped";
-  $("skip").hidden = stt === "skipped" || stt === "end";
-  $("skip").disabled = stt === "wait";
+  $("next").hidden = !(stt === "skipped" || stt === "correct");
+  $("next").textContent = idx >= pool.length - 1 ? "結果を見る" : "次に行く";
+  $("skip").hidden = stt === "skipped" || stt === "correct" || stt === "end";
   $("acts").hidden = stt === "end";
   $("endrow").hidden = stt !== "end";
+  updKnowT();
+  $("rl").hidden = stt !== "end" || !pool.length;
 }
 function renderCard(){
   var ty = $("typed"); ty.disabled = false; ty.value = ""; ty.className = ""; wasBad = false; cardMiss = 0; stt = "typing"; $("answer").textContent = "";
   if(!pool.length){ $("progress").textContent = ""; $("target").textContent = "練習する項目がありません。"; ty.disabled = true; stt = "end"; setMsg(""); btns(); return; }
   if(idx >= pool.length){
-    done = true; stt = "end"; if(!FULL && cur) hit(cur + "-d"); $("progress").textContent = "完了　" + total() + "点";
+    done = true; stt = "end"; if(!FULL && cur) hit(cur + "-d"); renderResults(); $("progress").textContent = "完了　" + total() + "点";
     $("target").textContent = pool.length + "問が終わりました。" + total() + " 点（100点満点）、ミス " + mistakes + " 回。";
     ty.disabled = true; setMsg("おつかれさまでした。", "good"); btns(); return;
   }
@@ -453,9 +491,8 @@ function renderCard(){
 }
 function win(){
   var ty = $("typed"), u = cardMiss ? 1 : 2, before = total();
-  units += u; lock("wait"); updateProgress(); btns();
-  ty.className = "good"; chime(); setMsg("正解！ +" + (total() - before) + "点", "good"); $("answer").textContent = pool[idx].en;
-  var t0 = tok; setTimeout(function(){ if(t0 === tok){ idx++; renderCard(); } }, 900);
+  units += u; res[idx] = cardMiss ? "miss" : "ok"; lock("correct"); updateProgress(); btns();
+  ty.className = "good"; chime(); setMsg("正解！ +" + (total() - before) + "点。覚えたかどうかを選んで、Enterか「次に行く」で進めます。", "good"); $("answer").textContent = pool[idx].en;
 }
 function judge(){
   var ty = $("typed");
@@ -471,10 +508,10 @@ function retry(){
 }
 function skip(){
   if(done || !pool.length || (stt !== "typing" && stt !== "wrong")) return;
-  lock("skipped"); $("answer").textContent = pool[idx].en; $("typed").className = "bad";
+  res[idx] = "skip"; lock("skipped"); $("answer").textContent = pool[idx].en; $("typed").className = "bad";
   setMsg("スキップ（0点）。Enterで次に進めます。", "bad"); btns(); $("typed").focus();
 }
-function goNext(){ if(stt !== "skipped") return; idx++; renderCard(); }
+function goNext(){ if(stt !== "skipped" && stt !== "correct") return; idx++; renderCard(); }
 function check(){
   if(done || !pool.length || composing || stt !== "typing" || cfg.md === "submit") return;
   var ty = $("typed"), v = norm(ty.value), t = norm(pool[idx].en);
@@ -494,7 +531,7 @@ $("typed").addEventListener("keydown", function(e){
   if(e.key !== "Enter" || composing || e.isComposing || !pool[idx] || done) return;
   e.preventDefault();
   if(stt === "wrong"){ retry(); return; }
-  if(stt === "skipped"){ goNext(); return; }
+  if(stt === "skipped" || stt === "correct"){ goNext(); return; }
   if(stt !== "typing") return;
   if(cfg.md === "submit"){ judge(); return; }
   if(norm($("typed").value) !== norm(pool[idx].en)){ buzz(); setMsg("まだ完成していません。", "bad"); }
@@ -503,28 +540,86 @@ $("judge").onclick = function(){ judge(); $("typed").focus(); };
 $("retry").onclick = retry;
 $("skip").onclick = skip;
 $("next").onclick = goNext;
-Array.prototype.forEach.call(document.querySelectorAll("#acts .btn"), function(b){ b.addEventListener("mousedown", function(e){ e.preventDefault(); }); });
+Array.prototype.forEach.call(document.querySelectorAll("#acts .btn, #tknow button"), function(b){ b.addEventListener("mousedown", function(e){ e.preventDefault(); }); });
+
+/* ---- 覚えた / 覚えていない ---- */
+function kkey(x){ return x.ja + "\u0001" + x.en; }
+function isKnown(bid, x){ return !!(S.known && S.known[bid] && S.known[bid][kkey(x)]); }
+function setKnown(bid, x, v){
+  S.known = S.known || {}; var m = S.known[bid] = S.known[bid] || {};
+  if(v) m[kkey(x)] = 1; else delete m[kkey(x)];
+  save();
+}
+function updKnowS(){
+  var it = st.pool[st.i], b = bk(), k = !!(it && b && isKnown(b.id, it));
+  $("sk0").setAttribute("aria-pressed", String(!!it && !k)); $("sk1").setAttribute("aria-pressed", String(k));
+  $("sk0").disabled = $("sk1").disabled = !it;
+}
+$("sk0").onclick = function(){ var b = bk(), it = st.pool[st.i]; if(b && it){ setKnown(b.id, it, false); updKnowS(); } };
+$("sk1").onclick = function(){ var b = bk(), it = st.pool[st.i]; if(b && it){ setKnown(b.id, it, true); updKnowS(); } };
+function updKnowT(){
+  var it = pool[idx], b = bk(), on = !!(it && b && stt !== "end" && !done), k = on && isKnown(b.id, it);
+  $("tknow").hidden = !on;
+  $("tk0").setAttribute("aria-pressed", String(on && !k)); $("tk1").setAttribute("aria-pressed", String(k));
+}
+$("tk0").onclick = function(){ var b = bk(), it = pool[idx]; if(b && it && !done){ setKnown(b.id, it, false); updKnowT(); } $("typed").focus(); };
+$("tk1").onclick = function(){ var b = bk(), it = pool[idx]; if(b && it && !done){ setKnown(b.id, it, true); updKnowT(); } $("typed").focus(); };
+
+/* ---- test result list (○ = ミスなしで正解, × = ミスあり／スキップ) ---- */
+function renderResults(){
+  var ul = $("rl"); ul.innerHTML = "";
+  pool.forEach(function(x, i){
+    var r = res[i] || "skip", li = mk("li"), d = mk("div"), m = mk("div", "mark " + (r === "ok" ? "ok" : "ng"));
+    d.appendChild(mk("strong", null, x.ja)); d.appendChild(mk("div", "en", x.en));
+    m.appendChild(mk("span", "sym", r === "ok" ? "○" : "×")); m.appendChild(mk("span", "cap", r === "ok" ? "ミスなし" : r === "miss" ? "ミスあり" : "スキップ"));
+    li.appendChild(d); li.appendChild(m); ul.appendChild(li);
+  });
+}
+
+/* ---- word list ---- */
+function renderWords(){
+  var b = bk(); if(!b){ go("books"); return; }
+  var f = $("wflt").value, ul = $("wl"); ul.innerHTML = "";
+  var all = b.items.filter(function(x){ return x.ja && x.en; });
+  function head(){ var n = all.filter(function(x){ return isKnown(b.id, x); }).length; $("wp").textContent = b.name + "　" + all.length + "件　覚えた" + n; }
+  head();
+  var list = all.filter(function(x){ return f === "all" || (f === "known") === isKnown(b.id, x); });
+  $("wstart").disabled = !list.length;
+  if(!list.length){ ul.appendChild(mk("li","empty","該当する項目がありません。")); return; }
+  list.forEach(function(x){
+    var li = mk("li"), d = mk("div"), k = mk("button","kbtn");
+    d.appendChild(mk("strong", null, x.ja)); d.appendChild(mk("div","en", x.en));
+    k.type = "button";
+    function paint(){ var on = isKnown(b.id, x); k.setAttribute("aria-pressed", String(on)); k.textContent = on ? "覚えた" : "覚えていない"; }
+    paint();
+    k.onclick = function(){ setKnown(b.id, x, !isKnown(b.id, x)); paint(); head(); };
+    li.appendChild(d); li.appendChild(k); ul.appendChild(li);
+  });
+}
+$("wflt").onchange = renderWords;
+$("wstart").onclick = function(){ $("sflt").value = $("wflt").value; go("study"); };
+$("wb").onclick = function(){ go("books"); };
 
 /* ---- study ---- */
 var st = {pool:[], i:0, shown:false};
 function shuf(a){ for(var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i+1)), k = a[i]; a[i] = a[j]; a[j] = k; } return a; }
 function startStudy(){
   var b = bk(); if(!b){ go("books"); return; }
-  st.pool = b.items.filter(function(x){ return x.ja && x.en; });
+  var f = $("sflt").value; st.pool = b.items.filter(function(x){ return x.ja && x.en && (f === "all" || (f === "known") === isKnown(b.id, x)); });
   if($("ssh").checked) shuf(st.pool);
   st.i = 0; st.shown = false; renderStudy();
 }
 function renderStudy(){
   var n = st.pool.length, b = bk();
   $("sprev").disabled = $("snext").disabled = $("sflip").disabled = !n;
-  if(!n){ $("stp").textContent = ""; $("sfront").textContent = "学習する項目がありません。"; $("sback").textContent = ""; return; }
+  if(!n){ $("stp").textContent = ""; $("sfront").textContent = "該当する項目がありません。"; $("sback").textContent = ""; updKnowS(); return; }
   var it = st.pool[st.i], ja = $("sdir").value === "ja";
   $("stp").textContent = (b ? b.name + "　" : "") + (st.i+1) + " / " + n;
   $("sfront").textContent = ja ? it.ja : it.en;
   $("sback").textContent = st.shown ? (ja ? it.en : it.ja) : "タップして答えを見る";
   $("sback").className = st.shown ? "" : "dim";
   $("sflip").textContent = st.shown ? "答えを隠す" : "答えを見る";
-  $("sprev").disabled = st.i === 0; $("snext").disabled = st.i === n - 1;
+  $("sprev").disabled = st.i === 0; $("snext").disabled = st.i === n - 1; updKnowS();
 }
 function sflip(){ if(!st.pool.length) return; st.shown = !st.shown; renderStudy(); }
 function sgo(d){ var j = st.i + d; if(j < 0 || j >= st.pool.length) return; st.i = j; st.shown = false; renderStudy(); }
@@ -532,8 +627,8 @@ $("scard").onclick = $("sflip").onclick = sflip;
 $("sprev").onclick = function(){ sgo(-1); };
 $("snext").onclick = function(){ sgo(1); };
 $("sdir").onchange = function(){ st.shown = false; renderStudy(); };
-$("ssh").onchange = startStudy;
-$("stb").onclick = function(){ go("books"); };
+$("ssh").onchange = startStudy; $("sflt").onchange = startStudy;
+$("stb").onclick = function(){ go("words"); };
 $("stest").onclick = function(){ go("setup"); };
 document.addEventListener("keydown", function(e){
   if($("s-study").hidden || e.target !== document.body) return;
